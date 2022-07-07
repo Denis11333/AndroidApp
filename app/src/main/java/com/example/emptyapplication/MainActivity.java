@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -17,33 +18,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.IOUtils;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.HttpResponse;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.NameValuePair;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.ClientProtocolException;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.entity.UrlEncodedFormEntity;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.methods.HttpPost;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.impl.client.DefaultHttpClient;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.message.BasicNameValuePair;
+import com.google.api.services.sheets.v4.model.ValueRange;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.checkerframework.checker.units.qual.A;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity {
@@ -51,11 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout linearLayout;
     private List<Cadet> cadetList = new ArrayList<>();
     private TypeOfWork typeOfWork = TypeOfWork.Duty;
-    char aChar = 'A';
-    private String urlClear = "https://sheets.googleapis.com/v4/spreadsheets/1ZASii3WhxszLheph-XroGVJINntqyfixEo2vhcKlIx0/values/Прибирання!A1:Z8?key=AIzaSyCc_vw8RW0JP81CqiS5sjTn2SJhrQyPbtw";
-    private String urlDuty = "https://sheets.googleapis.com/v4/spreadsheets/1ZASii3WhxszLheph-XroGVJINntqyfixEo2vhcKlIx0/values/Наряди!A1:Z8?key=AIzaSyCc_vw8RW0JP81CqiS5sjTn2SJhrQyPbtw";
-    private String urlWork = "https://sheets.googleapis.com/v4/spreadsheets/1ZASii3WhxszLheph-XroGVJINntqyfixEo2vhcKlIx0/values/Роботи!A1:Z8?key=AIzaSyCc_vw8RW0JP81CqiS5sjTn2SJhrQyPbtw";
-    private String urlReales = "https://sheets.googleapis.com/v4/spreadsheets/1ZASii3WhxszLheph-XroGVJINntqyfixEo2vhcKlIx0/values/Звільнення!A1:Z8?key=AIzaSyCc_vw8RW0JP81CqiS5sjTn2SJhrQyPbtw";
+
 
     @SuppressLint({"SetTextI18n", "WrongThread"})
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -66,37 +49,48 @@ public class MainActivity extends AppCompatActivity {
 
         linearLayout = findViewById(R.id.MyLayout);
 
+        File file = getFile();
 
+        CreateFile.createFile(file);
 
         Thread newThread = new Thread(() -> {
+
+            ValueRange valueRangeNames = null;
+            ValueRange valueRangeValues = null;
+
             try {
-                JSONObject jsonClear = new JSONObject(IOUtils.toString(new URL(urlClear), StandardCharsets.UTF_8));
-                JSONObject jsonDuty = new JSONObject(IOUtils.toString(new URL(urlDuty), StandardCharsets.UTF_8));
-                JSONObject jsonWorks = new JSONObject(IOUtils.toString(new URL(urlWork), StandardCharsets.UTF_8));
-                JSONObject jsonReales = new JSONObject(IOUtils.toString(new URL(urlReales), StandardCharsets.UTF_8));
-
-                JSONArray jsonArrayClear = jsonClear.getJSONArray("values");
-                JSONArray jsonArrayDuty = jsonDuty.getJSONArray("values");
-                JSONArray jsonArrayReales = jsonReales.getJSONArray("values");
-                JSONArray jsonArrayWorks = jsonWorks.getJSONArray("values");
-
-                for (int i = 0; i < jsonArrayClear.length(); i++) {
-
-                    cadetList.add(new Cadet(jsonArrayClear.getJSONArray(i).getString(0), jsonArrayDuty.getJSONArray(i).length() - 1,
-                            jsonArrayWorks.getJSONArray(i).length() - 1, jsonArrayClear.getJSONArray(i).length() - 1,
-                            jsonArrayReales.getJSONArray(i).length() - 1)
-                    );
-                }
-
-            } catch (JSONException | IOException e) {
+                valueRangeNames = GetValues.getValues("1YNn3-82eCVd26cpu7sV47C5jO60ht5_mF2E1TBAqtT8", "A2:A9", new FileInputStream(file));
+                valueRangeValues = GetValues.getValues("1YNn3-82eCVd26cpu7sV47C5jO60ht5_mF2E1TBAqtT8", "B2:E9", new FileInputStream(file));
+            } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            System.out.println(valueRangeNames.getValues());
+            System.out.println(valueRangeValues.getValues());
+            System.out.println(valueRangeNames.getValues().size());
+
+            for (int i = 0; i < valueRangeNames.getValues().size(); i++) {
+                String name = String.valueOf(valueRangeNames.getValues().get(i));
+                name = name.substring(1,name.length() - 1);
+
+                String Duty = String.valueOf(valueRangeValues.getValues().get(i).get(0));
+                String Work = String.valueOf(valueRangeValues.getValues().get(i).get(1));
+                String Clear = String.valueOf(valueRangeValues.getValues().get(i).get(2));
+                String Reales = String.valueOf(valueRangeValues.getValues().get(i).get(3));
+
+
+                cadetList.add(new Cadet(name, Integer.parseInt(Duty),Integer.parseInt(Work),
+                        Integer.parseInt(Clear), Integer.parseInt(Reales)));
+            }
+
+
         });
 
         newThread.start();
 
-
+        do {
         fillCadets(cadetList, typeOfWork);
+        }   while (cadetList.size() == 0);
 
         TabLayout tabLayout = findViewById(R.id.tabLayout);
         Button buttonDo = findViewById(R.id.button);
@@ -123,6 +117,8 @@ public class MainActivity extends AppCompatActivity {
                 this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
             }
 
+           fillTableInGoogle(file);
+
         });
 
         /**
@@ -131,7 +127,6 @@ public class MainActivity extends AppCompatActivity {
 
         buttonDo.setOnClickListener(view -> {
             yesNoAction(cadetList, new ArrayList<>());
-
         });
 
         /**
@@ -143,22 +138,30 @@ public class MainActivity extends AppCompatActivity {
             public void onTabSelected(TabLayout.Tab tab) {
 
                 if(Objects.equals(tab.getText(), "Наряди")) {
+                    buttonDo.setVisibility(View.VISIBLE);
+
                     fillCadets(cadetList, TypeOfWork.Duty);
                     typeOfWork = TypeOfWork.Duty;
                 }
 
                 else if(Objects.equals(tab.getText(), "Роботи")) {
+                    buttonDo.setVisibility(View.VISIBLE);
+
                     fillCadets(cadetList, TypeOfWork.Work);
                     typeOfWork = TypeOfWork.Work;
                 }
 
                 else if(tab.getText().equals("Прибирання")) {
+                    buttonDo.setVisibility(View.VISIBLE);
+
                     fillCadets(cadetList, TypeOfWork.Clean);
                     typeOfWork = TypeOfWork.Clean;
                 }
                 else {
                     fillCadets(cadetList, TypeOfWork.Reales);
                     typeOfWork = TypeOfWork.Reales;
+
+                    buttonDo.setVisibility(View.INVISIBLE);
                 }
 
             }
@@ -254,6 +257,8 @@ public class MainActivity extends AppCompatActivity {
             fillCadets(cadetList, typeOfWork);
 
             noAction();
+
+            fillTableInGoogle(getFile());
         });
 
         no.setOnClickListener(view12 -> {
@@ -266,6 +271,41 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void fillTableInGoogle(File file){
 
+        Thread thread = new Thread(() ->{
+
+            cadetList.sort(Comparator.comparing(Cadet::getSecondName));
+
+            List<List<Object>> list = new ArrayList<>();
+
+            for (int i = 0; i < cadetList.size(); i++) {
+                Cadet cadet = cadetList.get(i);
+                System.out.println(cadet);
+                List<Object> objects = new ArrayList<>();
+                objects.add(cadet.getDutyCount());
+                objects.add(cadet.getWorksCount());
+                objects.add(cadet.getCleanCount());
+                objects.add(cadet.getRealesCount());
+
+                list.add(objects);
+            }
+
+            try {
+                UpdateValues.updateValues("1YNn3-82eCVd26cpu7sV47C5jO60ht5_mF2E1TBAqtT8", "B2:E9","RAW", list, new FileInputStream(file));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        });
+
+        thread.start();
+
+    }
+
+    public File getFile(){
+        return new File(getApplicationContext().getFilesDir(), "text.json");
+    }
 
 }

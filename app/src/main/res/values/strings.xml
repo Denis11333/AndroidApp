@@ -1,3 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Помічник</string>
+    <string name="Duty">Наряди</string>
+    <string name="Works">Роботи</string>
+    <string name="Clear">Прибирання</string>
+    <string name="Reales">Звільнення</string>
+    <string name="Assign">Назначити</string>
+    <string name="SaveChanges">Зберегти зміни</string>
 </resources>
